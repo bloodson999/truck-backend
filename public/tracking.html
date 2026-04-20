@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Live Tracking</title>
+
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+</head>
+
+<body>
+
+<nav>
+  <a href="index.html">Home</a>
+  <a href="tracking.html">Tracking</a>
+  <a href="booking.html">Book Shipment</a>
+  <a href="about.html">Company</a>
+</nav>
+
+<!-- TRACKING INPUT -->
+<div class="track-box">
+  <h2>🚛 Track Your Shipment</h2>
+
+  <input id="trackId" placeholder="Enter Tracking ID (e.g. TRK101)">
+  <button onclick="startTracking()">Track</button>
+
+  <p id="msg"></p>
+</div>
+
+<!-- MAP (hidden until valid) -->
+<div id="map" style="display:none;"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+let map, truck;
+let lat = 40.5;
+let lng = -74.4;
+
+// fake database of valid IDs
+const shipments = {
+  "TRK101": true,
+  "TRK202": true,
+  "TRK303": true
+};
+
+function startTracking() {
+  const id = document.getElementById("trackId").value;
+  const msg = document.getElementById("msg");
+
+  // validation
+  if (!shipments[id]) {
+    msg.innerText = "❌ Invalid Tracking ID";
+    msg.style.color = "red";
+    return;
+  }
+
+  msg.innerText = "✔ Tracking started...";
+  msg.style.color = "green";
+
+  // show map
+  document.getElementById("map").style.display = "block";
+
+  // init map only once
+  if (!map) {
+    map = L.map('map').setView([lat, lng], 12);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: 'TruckFlow'
+    }).addTo(map);
+
+    truck = L.marker([lat, lng]).addTo(map);
+  }
+
+  // live movement simulation
+  setInterval(() => {
+    lat += (Math.random() - 0.5) * 0.01;
+    lng += (Math.random() - 0.5) * 0.01;
+
+    truck.setLatLng([lat, lng]);
+    map.setView([lat, lng]);
+  }, 2000);
+}
+</script>
+<!-- FEATURES -->
+<section class="features">
+  <div class="card">🚛 Freight Transport</div>
+  <div class="card">📦 Goods Delivery</div>
+  <div class="card">📍 Live Tracking</div>
+  <div class="card">⏱️ On-Time Delivery</div>
+</section>
+
+<!-- SERVICES -->
+<section class="services">
+  <h2>Our Services</h2>
+  <div class="service-box">
+    <div>🚚 Full Truck Load</div>
+    <div>📦 Parcel Delivery</div>
+    <div>🏭 Industrial Transport</div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div>
+    <h3>TruckFlow Logistics</h3>
+    <p>Safe, fast and reliable trucking solutions.</p>
+  </div>
+
+  <div>
+    <h4>Quick Links</h4>
+    <a href="index.html">Home</a><br>
+    <a href="tracking.html">Tracking</a><br>
+    <a href="booking.html">Book</a>
+  </div>
+
+  <div>
+    <h4>Contact</h4>
+    <p>Email: support@truckflow.com</p>
+    <p>Phone: +1 234 567 890</p>
+  </div>
+</footer>
+
+
+</body>
+</html>

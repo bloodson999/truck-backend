@@ -5,6 +5,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// ✅ SERVE FRONTEND FILES (ADD THIS)
+app.use(express.static("public"));
+
 /* -------------------------------
    IN-MEMORY DATABASE
 --------------------------------*/
@@ -109,10 +112,13 @@ app.post("/stop/:id", (req, res) => {
 });
 
 /* -------------------------------
-   SERVER (IMPORTANT FOR RENDER)
+   SERVER
 --------------------------------*/
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
+});
+app.get("/test", (req, res) => {
+  res.send("Server is working");
 });

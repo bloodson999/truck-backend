@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Truck Admin Panel</title>
+  <style>
+    body { font-family: Arial; background:#f4f4f4; padding:20px; }
+    .box { background:white; padding:20px; border-radius:10px; width:400px; }
+
+    input, button {
+      width:100%;
+      padding:10px;
+      margin:8px 0;
+    }
+
+    button {
+      cursor:pointer;
+      border:none;
+      color:white;
+      background:#111;
+    }
+
+    .start { background:green; }
+    .stop { background:red; }
+    .update { background:blue; }
+  </style>
+</head>
+
+<body>
+
+<div class="box">
+  <h2>🚛 Admin Control Panel</h2>
+
+  <input id="id" placeholder="Tracking ID (TRK123)" />
+
+  <button class="start" onclick="startTruck()">START</button>
+  <button class="stop" onclick="stopTruck()">STOP</button>
+
+  <hr>
+
+  <h3>📍 Manual Location</h3>
+
+  <input id="lat" placeholder="Latitude">
+  <input id="lng" placeholder="Longitude">
+
+  <button class="update" onclick="updateLocation()">UPDATE LOCATION</button>
+
+  <p id="msg"></p>
+</div>
+
+<script>
+const API = "https://your-backend.onrender.com"; // 🔁 CHANGE THIS
+
+let msg = document.getElementById("msg");
+
+function startTruck() {
+  const id = document.getElementById("id").value;
+
+  fetch(`${API}/start/${id}`, { method: "POST" })
+    .then(res => res.json())
+    .then(data => {
+      msg.innerText = "🚛 Truck Started";
+      msg.style.color = "green";
+    });
+}
+
+function stopTruck() {
+  const id = document.getElementById("id").value;
+
+  fetch(`${API}/stop/${id}`, { method: "POST" })
+    .then(res => res.json())
+    .then(data => {
+      msg.innerText = "⛔ Truck Stopped";
+      msg.style.color = "red";
+    });
+}
+
+function updateLocation() {
+  const id = document.getElementById("id").value;
+  const lat = document.getElementById("lat").value;
+  const lng = document.getElementById("lng").value;
+
+  fetch(`${API}/update-location/${id}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ lat, lng })
+  })
+  .then(res => res.json())
+  .then(data => {
+    msg.innerText = "📍 Location Updated";
+    msg.style.color = "blue";
+  });
+}
+</script>
+
+</body>
+</html>
