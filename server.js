@@ -5,7 +5,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ SERVE FRONTEND FILES (ADD THIS)
+// Serve frontend files
 app.use(express.static("public"));
 
 /* -------------------------------
@@ -28,7 +28,6 @@ app.post("/create", (req, res) => {
     status: "Created"
   };
 
-  // default start = Texas
   locations[id] = { lat: 31.0, lng: -99.0 };
 
   console.log(`📦 Created shipment ${id}`);
@@ -62,9 +61,7 @@ app.post("/start/:id", (req, res) => {
     return res.status(404).json({ error: "Invalid ID" });
   }
 
-  console.log(`▶ START ${id}`);
-
-  const target = { lat: 34.0, lng: -118.2 }; // Los Angeles
+  const target = { lat: 34.0, lng: -118.2 };
 
   clearInterval(intervals[id]);
 
@@ -77,7 +74,6 @@ app.post("/start/:id", (req, res) => {
     ) {
       clearInterval(intervals[id]);
       shipments[id].status = "Delivered";
-
       console.log(`📦 ${id} DELIVERED`);
       return;
     }
@@ -87,9 +83,7 @@ app.post("/start/:id", (req, res) => {
 
     locations[id] = current;
 
-    console.log(
-      `🚛 ${id} → ${current.lat.toFixed(3)}, ${current.lng.toFixed(3)}`
-    );
+    console.log(`🚛 ${id} → ${current.lat.toFixed(3)}, ${current.lng.toFixed(3)}`);
   }, 1000);
 
   shipments[id].status = "In Transit";
@@ -112,13 +106,17 @@ app.post("/stop/:id", (req, res) => {
 });
 
 /* -------------------------------
+   TEST ROUTE
+--------------------------------*/
+app.get("/test", (req, res) => {
+  res.send("Server is working");
+});
+
+/* -------------------------------
    SERVER
 --------------------------------*/
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
-});
-app.get("/test", (req, res) => {
-  res.send("Server is working");
 });

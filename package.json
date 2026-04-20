@@ -2,9 +2,14 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
+<<<<<<< HEAD
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+=======
+  "main": "index.js",
+  "scripts": {
+>>>>>>> eb2ff19642e4be67b039d96488df2ad8f4ee0e45
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -14,4 +19,8 @@
     "cors": "^2.8.6",
     "express": "^5.2.1"
   }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> eb2ff19642e4be67b039d96488df2ad8f4ee0e45
