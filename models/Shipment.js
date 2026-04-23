@@ -11,18 +11,25 @@ const pointSchema = new mongoose.Schema(
 const shipmentSchema = new mongoose.Schema(
   {
     trackingId: { type: String, required: true, unique: true, index: true },
-    pickup:     { type: pointSchema, required: true },
-    drop:       { type: pointSchema, required: true },
-    weight:     { type: Number, default: 0 },
-    truckType:  { type: String, default: "Small Truck" },
+
+    pickupText: { type: String, required: true },
+    dropText: { type: String, required: true },
+
+    pickup: { type: pointSchema, required: true },
+    drop: { type: pointSchema, required: true },
+
+    weight: { type: Number, default: 0 },
+    truckType: { type: String, default: "Small Truck" },
+
     status: {
       type: String,
       enum: ["Created", "In Transit", "Paused", "Delivered"],
       default: "Created"
     },
-    location:   { type: pointSchema, required: true },
-    history:    { type: [pointSchema], default: [] },
-    route:      { type: [pointSchema], default: [] },
+
+    location: { type: pointSchema, required: true },
+    history: { type: [pointSchema], default: [] },
+    route: { type: [pointSchema], default: [] },
     routeIndex: { type: Number, default: 0 }
   },
   { timestamps: true }
