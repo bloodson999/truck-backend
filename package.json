@@ -1,26 +1,16 @@
 {
-  "name": "backend",
+  "name": "truck-backend",
   "version": "1.0.0",
-  "description": "",
-<<<<<<< HEAD
   "main": "server.js",
+  "type": "commonjs",
   "scripts": {
-    "start": "node server.js",
-=======
-  "main": "index.js",
-  "scripts": {
->>>>>>> eb2ff19642e4be67b039d96488df2ad8f4ee0e45
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "cors": "^2.8.6",
-    "express": "^5.2.1"
+    "axios": "^1.15.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
+    "express": "^4.18.2",
+    "mongoose": "^9.4.1"
   }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> eb2ff19642e4be67b039d96488df2ad8f4ee0e45

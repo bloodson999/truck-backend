@@ -1,125 +1,182 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Live Tracking</title>
-
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+  <title>Live Tracking - TruckFlow</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
 
 <body>
+  <!-- NAVBAR -->
+  <div id="navbar"></div>
 
-<nav>
-  <a href="index.html">Home</a>
-  <a href="tracking.html">Tracking</a>
-  <a href="booking.html">Book Shipment</a>
-  <a href="about.html">Company</a>
-</nav>
+  <main class="page">
+    <div class="track-box">
+      <h2>🚛 Track Your Shipment</h2>
+      <input id="trackId" placeholder="Enter Tracking ID" />
+      <button onclick="startTracking()">Track</button>
+      <p id="msg"></p>
+    </div>
 
-<!-- TRACKING INPUT -->
-<div class="track-box">
-  <h2>🚛 Track Your Shipment</h2>
+    <div id="map" style="display:none; height:400px;"></div>
+  </main>
 
-  <input id="trackId" placeholder="Enter Tracking ID (e.g. TRK101)">
-  <button onclick="startTracking()">Track</button>
+  <section class="trust">
+    <h2>Trusted Logistics Network</h2>
+    <p>We connect businesses with fast, reliable, and real-time tracked trucking services across the country.</p>
+    <div class="trust-grid">
+      <div class="trust-card">⚡ Fast Dispatch in under 5 min</div>
+      <div class="trust-card">📍 Real-time GPS Tracking</div>
+      <div class="trust-card">🔒 Secure & Verified Drivers</div>
+      <div class="trust-card">📦 Nationwide Delivery Coverage</div>
+    </div>
+  </section>
 
-  <p id="msg"></p>
-</div>
+  <section class="how">
+    <h2>How It Works</h2>
+    <div class="steps">
+      <div class="step"><span>1</span><h3>Book a Truck</h3><p>Enter pickup and drop location in seconds.</p></div>
+      <div class="step"><span>2</span><h3>Driver Assigned</h3><p>Nearest available truck is automatically assigned.</p></div>
+      <div class="step"><span>3</span><h3>Live Tracking</h3><p>Track your shipment live on the map.</p></div>
+      <div class="step"><span>4</span><h3>Delivered</h3><p>Get instant delivery confirmation.</p></div>
+    </div>
+  </section>
 
-<!-- MAP (hidden until valid) -->
-<div id="map" style="display:none;"></div>
+  <section class="live-preview">
+    <h2>Live Shipment Preview</h2>
+    <p>Track your delivery in real-time with GPS precision.</p>
+    <div class="map-preview">🚛 Moving Truck Simulation Active</div>
+    <a class="btn" href="booking.html">Book Truck</a>
+  </section>
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <section class="stats">
+    <div><h2>1200+</h2><p>Deliveries</p></div>
+    <div><h2>50+</h2><p>Trucks</p></div>
+    <div><h2>24/7</h2><p>Support</p></div>
+    <div><h2>100%</h2><p>Safety</p></div>
+  </section>
 
-<script>
-let map, truck;
-let lat = 40.5;
-let lng = -74.4;
+  <section class="features">
+    <div class="card">🚛 Freight Transport</div>
+    <div class="card">📦 Goods Delivery</div>
+    <div class="card">📍 Live Tracking</div>
+    <div class="card">⏱️ On-Time Delivery</div>
+  </section>
 
-// fake database of valid IDs
-const shipments = {
-  "TRK101": true,
-  "TRK202": true,
-  "TRK303": true
-};
+  <section class="services">
+    <h2>Our Services</h2>
+    <div class="service-box">
+      <div>🚚 Full Truck Load</div>
+      <div>📦 Parcel Delivery</div>
+      <div>🏭 Industrial Transport</div>
+    </div>
+  </section>
 
-function startTracking() {
-  const id = document.getElementById("trackId").value;
-  const msg = document.getElementById("msg");
+  <footer>
+    <div>
+      <h3>TruckFlow Logistics</h3>
+      <p>Safe, fast and reliable trucking solutions.</p>
+    </div>
+    <div>
+      <h4>Quick Links</h4>
+      <a href="index.html">Home</a><br />
+      <a href="tracking.html">Tracking</a><br />
+      <a href="booking.html">Book</a>
+    </div>
+    <div>
+      <h4>Contact</h4>
+      <p>Email: support@truckflow.com</p>
+      <p>Phone: +1 234 567 890</p>
+    </div>
+  </footer>
 
-  // validation
-  if (!shipments[id]) {
-    msg.innerText = "❌ Invalid Tracking ID";
-    msg.style.color = "red";
-    return;
-  }
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="js/navbar.js"></script>
 
-  msg.innerText = "✔ Tracking started...";
-  msg.style.color = "green";
+  <script>
+    const API = window.location.origin;
+    let map, marker;
+    let pollTimer = null;
 
-  // show map
-  document.getElementById("map").style.display = "block";
+    async function readJsonSafe(res) {
+      try { return await res.json(); } catch { return {}; }
+    }
 
-  // init map only once
-  if (!map) {
-    map = L.map('map').setView([lat, lng], 12);
+    function updateMap(point) {
+      if (!map) {
+        map = L.map("map").setView([point.lat, point.lng], 8);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "TruckFlow"
+        }).addTo(map);
+        marker = L.marker([point.lat, point.lng]).addTo(map);
+      } else {
+        marker.setLatLng([point.lat, point.lng]);
+        map.panTo([point.lat, point.lng]);
+      }
+    }
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: 'TruckFlow'
-    }).addTo(map);
+    async function startTracking() {
+      const id = document.getElementById("trackId").value.trim();
+      const msg = document.getElementById("msg");
 
-    truck = L.marker([lat, lng]).addTo(map);
-  }
+      if (!id) {
+        msg.innerText = "⚠️ Enter Tracking ID";
+        return;
+      }
 
-  // live movement simulation
-  setInterval(() => {
-    lat += (Math.random() - 0.5) * 0.01;
-    lng += (Math.random() - 0.5) * 0.01;
+      if (pollTimer) clearInterval(pollTimer);
 
-    truck.setLatLng([lat, lng]);
-    map.setView([lat, lng]);
-  }, 2000);
-}
-</script>
-<!-- FEATURES -->
-<section class="features">
-  <div class="card">🚛 Freight Transport</div>
-  <div class="card">📦 Goods Delivery</div>
-  <div class="card">📍 Live Tracking</div>
-  <div class="card">⏱️ On-Time Delivery</div>
-</section>
+      const res = await fetch(`${API}/shipment/${encodeURIComponent(id)}`);
+      const data = await readJsonSafe(res);
 
-<!-- SERVICES -->
-<section class="services">
-  <h2>Our Services</h2>
-  <div class="service-box">
-    <div>🚚 Full Truck Load</div>
-    <div>📦 Parcel Delivery</div>
-    <div>🏭 Industrial Transport</div>
-  </div>
-</section>
+      // supports both:
+      // 1) { success:true, shipment:{ location } }
+      // 2) { shipment:{...}, location:{...} }
+      if (!res.ok || !data.shipment) {
+        msg.innerText = "❌ Tracking ID not found";
+        return;
+      }
 
-<!-- FOOTER -->
-<footer>
-  <div>
-    <h3>TruckFlow Logistics</h3>
-    <p>Safe, fast and reliable trucking solutions.</p>
-  </div>
+      const ship = data.shipment;
+      const loc = ship.location || data.location;
 
-  <div>
-    <h4>Quick Links</h4>
-    <a href="index.html">Home</a><br>
-    <a href="tracking.html">Tracking</a><br>
-    <a href="booking.html">Book</a>
-  </div>
+      if (!loc || typeof loc.lat !== "number" || typeof loc.lng !== "number") {
+        msg.innerText = "❌ No location yet";
+        return;
+      }
 
-  <div>
-    <h4>Contact</h4>
-    <p>Email: support@truckflow.com</p>
-    <p>Phone: +1 234 567 890</p>
-  </div>
-</footer>
+      document.getElementById("map").style.display = "block";
+      updateMap(loc);
+      msg.innerText = `ℹ️ Status: ${ship.status || "Created"}`;
 
+      pollTimer = setInterval(async () => {
+        try {
+          const r = await fetch(`${API}/shipment/${encodeURIComponent(id)}`);
+          const d = await readJsonSafe(r);
+          if (!r.ok || !d.shipment) return;
 
+          const s = d.shipment;
+          const p = s.location || d.location;
+          if (!p) return;
+
+          updateMap(p);
+
+          if (s.status === "In Transit") {
+            msg.innerText = `🚛 Moving: ${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}`;
+          } else if (s.status === "Paused") {
+            msg.innerText = "⛔ Stopped";
+          } else if (s.status === "Delivered") {
+            msg.innerText = "✅ Delivered";
+            clearInterval(pollTimer);
+          } else {
+            msg.innerText = `ℹ️ Status: ${s.status || "Created"}`;
+          }
+        } catch {
+          msg.innerText = "⚠️ Network error";
+        }
+      }, 2000);
+    }
+  </script>
 </body>
 </html>

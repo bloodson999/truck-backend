@@ -2,95 +2,258 @@
 <html>
 <head>
   <title>Truck Admin Panel</title>
-  <style>
-    body { font-family: Arial; background:#f4f4f4; padding:20px; }
-    .box { background:white; padding:20px; border-radius:10px; width:400px; }
-
-    input, button {
-      width:100%;
-      padding:10px;
-      margin:8px 0;
-    }
-
-    button {
-      cursor:pointer;
-      border:none;
-      color:white;
-      background:#111;
-    }
-
-    .start { background:green; }
-    .stop { background:red; }
-    .update { background:blue; }
-  </style>
+  <link rel="stylesheet" href="css/style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
-
 <body>
+  <div id="navbar"></div>
 
-<div class="box">
-  <h2>🚛 Admin Control Panel</h2>
+  <div class="admin-container">
+    <div class="box" id="loginBox">
+      <h2>🔐 Admin Login</h2>
+      <input id="username" placeholder="Username" />
+      <input id="password" type="password" placeholder="Password" />
+      <button onclick="loginAdmin()">Login</button>
+      <p id="msg"></p>
+    </div>
 
-  <input id="id" placeholder="Tracking ID (TRK123)" />
+    <div class="box" id="panelBox" style="display:none;">
+      <h2>🚛 Admin Control Panel</h2>
 
-  <button class="start" onclick="startTruck()">START</button>
-  <button class="stop" onclick="stopTruck()">STOP</button>
+      <input id="id" placeholder="Tracking ID (TRK123)" />
+      <button class="start" onclick="startTruck()">START</button>
+      <button class="stop" onclick="stopTruck()">STOP</button>
+      <button onclick="loadHistory()">VIEW TRACKING HISTORY</button>
 
-  <hr>
+      <hr />
 
-  <h3>📍 Manual Location</h3>
+      <h3>📍 Manual Location</h3>
+      <input id="lat" placeholder="Latitude" />
+      <input id="lng" placeholder="Longitude" />
+      <button class="update" onclick="updateLocation()">UPDATE LOCATION</button>
 
-  <input id="lat" placeholder="Latitude">
-  <input id="lng" placeholder="Longitude">
+      <button style="margin-top:12px;" onclick="logoutAdmin()">Logout</button>
+      <p id="panelMsg"></p>
 
-  <button class="update" onclick="updateLocation()">UPDATE LOCATION</button>
+      <hr />
+      <h3>📜 Shipment History</h3>
+      <p id="statusInfo"></p>
+      <ul id="historyList" style="margin-top:10px; padding-left:18px;"></ul>
+    </div>
+  </div>
 
-  <p id="msg"></p>
-</div>
+  <script src="js/navbar.js"></script>
+  <script>
+    const API = "http://localhost:3000";
+    const TOKEN_KEY = "admin_token";
+    const geoCache = new Map();
 
-<script>
-const API = "https://your-backend.onrender.com"; // 🔁 CHANGE THIS
+    const loginBox = document.getElementById("loginBox");
+    const panelBox = document.getElementById("panelBox");
 
-let msg = document.getElementById("msg");
+    function setMsg(text, color = "#fff", id = "msg") {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.innerText = text;
+      el.style.color = color;
+    }
 
-function startTruck() {
-  const id = document.getElementById("id").value;
+    function getToken() {
+      return localStorage.getItem(TOKEN_KEY) || "";
+    }
 
-  fetch(`${API}/start/${id}`, { method: "POST" })
-    .then(res => res.json())
-    .then(data => {
-      msg.innerText = "🚛 Truck Started";
-      msg.style.color = "green";
-    });
-}
+    async function safeJson(res) {
+      try {
+        return await res.json();
+      } catch {
+        return { success: false, error: `HTTP ${res.status}` };
+      }
+    }
 
-function stopTruck() {
-  const id = document.getElementById("id").value;
+    async function authFetch(url, options = {}) {
+      const token = getToken();
+      const headers = { ...(options.headers || {}), Authorization: `Bearer ${token}` };
+      return fetch(url, { ...options, headers });
+    }
 
-  fetch(`${API}/stop/${id}`, { method: "POST" })
-    .then(res => res.json())
-    .then(data => {
-      msg.innerText = "⛔ Truck Stopped";
-      msg.style.color = "red";
-    });
-}
+    function getTrackingId() {
+      return document.getElementById("id").value.trim();
+    }
 
-function updateLocation() {
-  const id = document.getElementById("id").value;
-  const lat = document.getElementById("lat").value;
-  const lng = document.getElementById("lng").value;
+    function getPoint() {
+      const latRaw = document.getElementById("lat").value.trim();
+      const lngRaw = document.getElementById("lng").value.trim();
 
-  fetch(`${API}/update-location/${id}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ lat, lng })
-  })
-  .then(res => res.json())
-  .then(data => {
-    msg.innerText = "📍 Location Updated";
-    msg.style.color = "blue";
-  });
-}
-</script>
+      if (!latRaw && !lngRaw) return null;
 
+      const lat = Number(latRaw);
+      const lng = Number(lngRaw);
+
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return undefined;
+      return { lat, lng };
+    }
+
+    async function pointToCity(point) {
+      if (!point || typeof point.lat !== "number" || typeof point.lng !== "number") {
+        return "Unknown location";
+      }
+
+      const key = `${point.lat.toFixed(4)},${point.lng.toFixed(4)}`;
+      if (geoCache.has(key)) return geoCache.get(key);
+
+      try {
+        const res = await fetch(
+          `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${point.lat}&longitude=${point.lng}&localityLanguage=en`
+        );
+        const data = await res.json();
+
+        const city =
+          data.city ||
+          data.locality ||
+          data.principalSubdivision ||
+          data.countryName ||
+          `${point.lat}, ${point.lng}`;
+
+        geoCache.set(key, city);
+        return city;
+      } catch {
+        return `${point.lat}, ${point.lng}`;
+      }
+    }
+
+    async function loginAdmin() {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      const res = await fetch(`${API}/admin/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+
+      const data = await safeJson(res);
+      if (!res.ok || !data.success) return setMsg(`❌ ${data.error || "Login failed"}`, "red");
+
+      localStorage.setItem(TOKEN_KEY, data.token);
+      loginBox.style.display = "none";
+      panelBox.style.display = "block";
+      setMsg("✅ Logged in", "lime", "panelMsg");
+    }
+
+    async function logoutAdmin() {
+      try {
+        await authFetch(`${API}/admin/logout`, { method: "POST" });
+      } catch {}
+      localStorage.removeItem(TOKEN_KEY);
+      panelBox.style.display = "none";
+      loginBox.style.display = "block";
+      setMsg("Logged out", "orange");
+      document.getElementById("historyList").innerHTML = "";
+      document.getElementById("statusInfo").innerText = "";
+    }
+
+    async function startTruck() {
+      const id = getTrackingId();
+      const point = getPoint();
+
+      if (!id) return setMsg("⚠️ Enter Tracking ID", "orange", "panelMsg");
+      if (point === undefined) return setMsg("⚠️ Invalid latitude/longitude", "orange", "panelMsg");
+
+      const res = await authFetch(`${API}/start/${id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(point ? { destination: point } : {})
+      });
+
+      const data = await safeJson(res);
+      if (!res.ok || !data.success) return setMsg(`❌ ${data.error || "Start failed"}`, "red", "panelMsg");
+
+      setMsg("🚛 Truck Started", "lime", "panelMsg");
+    }
+
+    async function stopTruck() {
+      const id = getTrackingId();
+      if (!id) return setMsg("⚠️ Enter Tracking ID", "orange", "panelMsg");
+
+      const res = await authFetch(`${API}/stop/${id}`, { method: "POST" });
+      const data = await safeJson(res);
+      if (!res.ok || !data.success) return setMsg(`❌ ${data.error || "Stop failed"}`, "red", "panelMsg");
+
+      setMsg("⛔ Truck Stopped", "red", "panelMsg");
+    }
+
+    async function updateLocation() {
+      const id = getTrackingId();
+      const point = getPoint();
+
+      if (!id) return setMsg("⚠️ Enter Tracking ID", "orange", "panelMsg");
+      if (!point) return setMsg("⚠️ Enter latitude and longitude", "orange", "panelMsg");
+      if (point === undefined) return setMsg("⚠️ Invalid latitude/longitude", "orange", "panelMsg");
+
+      const res = await authFetch(`${API}/update-location/${id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(point)
+      });
+
+      const data = await safeJson(res);
+      if (!res.ok || !data.success) return setMsg(`❌ ${data.error || "Update failed"}`, "red", "panelMsg");
+
+      setMsg("📍 Location Updated", "#4aa3ff", "panelMsg");
+    }
+
+    async function loadHistory() {
+      const id = getTrackingId();
+      if (!id) return setMsg("⚠️ Enter Tracking ID", "orange", "panelMsg");
+
+      const res = await fetch(`${API}/shipment/${id}`);
+      const data = await safeJson(res);
+
+      if (!res.ok || !data.success) {
+        return setMsg(`❌ ${data.error || "Shipment not found"}`, "red", "panelMsg");
+      }
+
+      const s = data.shipment;
+      const list = document.getElementById("historyList");
+      const statusInfo = document.getElementById("statusInfo");
+
+      list.innerHTML = "<li>Loading city history...</li>";
+
+      const currentCity = await pointToCity(s.location);
+      statusInfo.innerText = `Status: ${s.status} | Current: ${currentCity}`;
+
+      list.innerHTML = "";
+      const history = Array.isArray(s.history) ? s.history : [];
+
+      if (history.length === 0) {
+        list.innerHTML = "<li>No history yet.</li>";
+        return;
+      }
+
+      for (let i = 0; i < history.length; i++) {
+        const city = await pointToCity(history[i]);
+        const li = document.createElement("li");
+        li.textContent = `#${i + 1}: ${city}`;
+        list.appendChild(li);
+      }
+    }
+
+    async function initAdmin() {
+      const token = getToken();
+      if (!token) return;
+
+      const res = await authFetch(`${API}/admin/me`);
+      const data = await safeJson(res);
+
+      if (res.ok && data.success) {
+        loginBox.style.display = "none";
+        panelBox.style.display = "block";
+      } else {
+        localStorage.removeItem(TOKEN_KEY);
+      }
+    }
+
+    initAdmin();
+  </script>
 </body>
 </html>

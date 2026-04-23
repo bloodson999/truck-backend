@@ -8,17 +8,13 @@
 
 <body>
 
-<!-- NAV -->
-<nav>
-  <a href="index.html">Home</a>
-  <a href="tracking.html">Tracking</a>
-  <a href="booking.html">Book Shipment</a>
-  <a href="about.html">Company</a>
-</nav>
+<!-- ✅ NAVBAR COMPONENT -->
+<div id="navbar"></div>
 
 <!-- HERO -->
 <section class="about-hero">
   <h1>🚛 About TruckFlow Logistics</h1>
+  <br>
   <p>Reliable trucking. Real-time tracking. Nationwide delivery.</p>
 </section>
 
@@ -30,55 +26,99 @@
     safe, fast, and technology-driven delivery services. We connect businesses
     with a powerful fleet of trucks equipped with live GPS tracking.
   </p>
+<br>
 
-  <!-- STATS -->
-  <div class="about-stats">
-    <div>
-      <h2>25+</h2>
-      <p>Trucks</p>
-    </div>
+</b>
+  <p class="about-text">
+    Our mission is to revolutionize the trucking industry by providing
+    transparent, efficient, and reliable logistics solutions. With a focus on
+    customer satisfaction and cutting-edge technology, we ensure your shipments
+    are delivered on time and tracked in real-time.
 
-    <div>
-      <h2>1000+</h2>
-      <p>Deliveries</p>
-    </div>
+<!-- CARDS -->
+<!-- TRUST SECTION -->
+<section class="trust">
+  <h2>Trusted Logistics Network</h2>
+  <p>
+    We connect businesses with fast, reliable, and real-time tracked trucking services across the country.
+  </p>
 
-    <div>
-      <h2>50+</h2>
-      <p>Cities Covered</p>
-    </div>
-
-    <div>
-      <h2>24/7</h2>
-      <p>Support</p>
-    </div>
+  <div class="trust-grid">
+    <div class="trust-card">⚡ Fast Dispatch in under 5 min</div>
+    <div class="trust-card">📍 Real-time GPS Tracking</div>
+    <div class="trust-card">🔒 Secure & Verified Drivers</div>
+    <div class="trust-card">📦 Nationwide Delivery Coverage</div>
   </div>
-
 </section>
 
-<!-- FEATURES CARDS -->
-<section class="about-grid">
+<!-- HOW IT WORKS -->
+<section class="how">
+  <h2>How It Works</h2>
 
-  <div class="about-card">
-    <h3>🚚 Fleet</h3>
-    <p>Modern GPS-enabled trucks for safe transportation.</p>
+  <div class="steps">
+    <div class="step">
+      <span>1</span>
+      <h3>Book a Truck</h3>
+      <p>Enter pickup and drop location in seconds.</p>
+    </div>
+
+    <div class="step">
+      <span>2</span>
+      <h3>Driver Assigned</h3>
+      <p>Nearest available truck is automatically assigned.</p>
+    </div>
+
+    <div class="step">
+      <span>3</span>
+      <h3>Live Tracking</h3>
+      <p>Track your shipment live on the map.</p>
+    </div>
+
+    <div class="step">
+      <span>4</span>
+      <h3>Delivered</h3>
+      <p>Get instant delivery confirmation.</p>
+    </div>
   </div>
+</section>
 
-  <div class="about-card">
-    <h3>📍 Coverage</h3>
-    <p>We operate across cities, states, and industrial zones.</p>
+<!-- LIVE MAP PREVIEW SECTION -->
+<section class="live-preview">
+  <h2>Live Shipment Preview</h2>
+  <p>Track your delivery in real-time with GPS precision.</p>
+
+  <div class="map-preview">
+    🚛 Moving Truck Simulation Active
   </div>
+  <a class="btn" href="booking.html">Book Truck</a>
+</section>
 
-  <div class="about-card">
-    <h3>🛰️ Tracking</h3>
-    <p>Real-time live tracking for every shipment.</p>
+<!-- STATS -->
+<section class="stats">
+  <div>
+    <h2>1200+</h2>
+    <p>Deliveries</p>
   </div>
-
-  <div class="about-card">
-    <h3>🔒 Safety</h3>
-    <p>Fully insured cargo with secure handling systems.</p>
+  <div>
+    <h2>50+</h2>
+    <p>Trucks</p>
   </div>
+  <div>
+    <h2>24/7</h2>
+    <p>Support</p>
+  </div>
+  <div>
+    <h2>100%</h2>
+    <p>Safety</p>
+  </div>
+</section>
 
+<!-- FEATURES -->
+<section class="features">
+  <div class="card">🚛 Freight Transport</div>
+  <div class="card">📦 Goods Delivery</div>
+  <div class="card">📍 Live Tracking</div>
+  <div class="card">⏱️ On-Time Delivery</div>
 </section>
 
 <!-- SERVICES -->
@@ -91,6 +131,7 @@
   </div>
 </section>
 
+
 <!-- FOOTER -->
 <footer>
   <div>
@@ -102,7 +143,7 @@
     <h4>Quick Links</h4>
     <a href="index.html">Home</a><br>
     <a href="tracking.html">Tracking</a><br>
-    <a href="booking.html">Book Shipment</a>
+    <a href="booking.html">Book</a>
   </div>
 
   <div>
@@ -111,6 +152,10 @@
     <p>Phone: +1 234 567 890</p>
   </div>
 </footer>
+
+<!-- ✅ LOAD NAVBAR -->
+<script src="js/navbar.js"></script>
+
 
 </body>
 </html>

@@ -1,56 +1,133 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Book Shipment</title>
-  <link rel="stylesheet" href="css/style.css">
+  <title>Book Shipment - TruckFlow</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
 
-<!-- NAV -->
-<nav>
-  <a href="index.html">Home</a>
-  <a href="tracking.html">Tracking</a>
-  <a href="booking.html">Book Shipment</a>
-  <a href="about.html">Company</a>
-</nav>
+<!-- NAVBAR -->
+<div id="navbar"></div>
 
-<!-- HERO SECTION -->
-<section class="booking-hero">
-  <h1>Book a Truck in Seconds</h1>
-  <p>Fast pickup, safe delivery, real-time tracking included.</p>
+<main class="page">
+
+  <section class="booking-hero">
+    <h1>Book a Truck in Seconds</h1>
+    <p>Fast pickup, safe delivery, real-time tracking included.</p>
+  </section>
+
+  <section class="booking-section">
+
+    <div class="booking-card">
+      <h2>Shipment Details</h2>
+
+      <form id="bookingForm">
+
+        <input id="pickup" type="text" placeholder="Pickup Location" required>
+        <input id="drop" type="text" placeholder="Drop Location" required>
+        <input id="weight" type="number" placeholder="Weight (kg)" required>
+
+        <select id="truckType">
+          <option value="Small Truck">Small Truck</option>
+          <option value="Medium Truck">Medium Truck</option>
+          <option value="Heavy Truck">Heavy Truck</option>
+        </select>
+
+        <button type="submit">🚛 Request Truck</button>
+
+      </form>
+
+      <p id="msg"></p>
+    </div>
+
+  </section>
+
+</main>
+
+<section class="trust">
+  <h2>Trusted Logistics Network</h2>
+  <p>
+    We connect businesses with fast, reliable, and real-time tracked trucking services across the country.
+  </p>
+
+  <div class="trust-grid">
+    <div class="trust-card">⚡ Fast Dispatch in under 5 min</div>
+    <div class="trust-card">📍 Real-time GPS Tracking</div>
+    <div class="trust-card">🔒 Secure & Verified Drivers</div>
+    <div class="trust-card">📦 Nationwide Delivery Coverage</div>
+  </div>
 </section>
 
-<!-- BOOKING CARD -->
-<section class="booking-section">
+<!-- HOW IT WORKS -->
+<section class="how">
+  <h2>How It Works</h2>
 
-  <div class="booking-card">
-    <h2>Shipment Details</h2>
+  <div class="steps">
+    <div class="step">
+      <span>1</span>
+      <h3>Book a Truck</h3>
+      <p>Enter pickup and drop location in seconds.</p>
+    </div>
 
-    <form>
-      <input type="text" placeholder="Pickup Location" required>
-      <input type="text" placeholder="Drop Location" required>
-      <input type="number" placeholder="Weight (kg)" required>
+    <div class="step">
+      <span>2</span>
+      <h3>Driver Assigned</h3>
+      <p>Nearest available truck is automatically assigned.</p>
+    </div>
 
-      <select>
-        <option>Small Truck</option>
-        <option>Medium Truck</option>
-        <option>Heavy Truck</option>
-      </select>
+    <div class="step">
+      <span>3</span>
+      <h3>Live Tracking</h3>
+      <p>Track your shipment live on the map.</p>
+    </div>
 
-      <button type="submit">🚛 Request Truck</button>
-    </form>
+    <div class="step">
+      <span>4</span>
+      <h3>Delivered</h3>
+      <p>Get instant delivery confirmation.</p>
+    </div>
   </div>
+</section>
 
+<!-- LIVE MAP PREVIEW SECTION -->
+<section class="live-preview">
+  <h2>Live Shipment Preview</h2>
+  <p>Track your delivery in real-time with GPS precision.</p>
+
+  <div class="map-preview">
+    🚛 Moving Truck Simulation Active
+  </div>
+  <a class="btn" href="tracking.html">Track Shipment</a>
 </section>
 
 <!-- STATS -->
 <section class="stats">
-  <div><h2>1200+</h2><p>Deliveries</p></div>
-  <div><h2>50+</h2><p>Trucks</p></div>
-  <div><h2>24/7</h2><p>Support</p></div>
-  <div><h2>100%</h2><p>Safety</p></div>
+  <div>
+    <h2>1200+</h2>
+    <p>Deliveries</p>
+  </div>
+  <div>
+    <h2>50+</h2>
+    <p>Trucks</p>
+  </div>
+  <div>
+    <h2>24/7</h2>
+    <p>Support</p>
+  </div>
+  <div>
+    <h2>100%</h2>
+    <p>Safety</p>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features">
+  <div class="card">🚛 Freight Transport</div>
+  <div class="card">📦 Goods Delivery</div>
+  <div class="card">📍 Live Tracking</div>
+  <div class="card">⏱️ On-Time Delivery</div>
 </section>
 
 <!-- SERVICES -->
@@ -63,6 +140,7 @@
   </div>
 </section>
 
+
 <!-- FOOTER -->
 <footer>
   <div>
@@ -74,7 +152,7 @@
     <h4>Quick Links</h4>
     <a href="index.html">Home</a><br>
     <a href="tracking.html">Tracking</a><br>
-    <a href="booking.html">Book Shipment</a>
+    <a href="booking.html">Book</a>
   </div>
 
   <div>
@@ -83,6 +161,52 @@
     <p>Phone: +1 234 567 890</p>
   </div>
 </footer>
+
+<script src="js/navbar.js"></script>
+
+<script>
+const API = "http://localhost:3000";
+
+document.getElementById("bookingForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const msg = document.getElementById("msg");
+
+  const pickup = document.getElementById("pickup").value.trim();
+  const drop = document.getElementById("drop").value.trim();
+  const weight = document.getElementById("weight").value;
+  const truckType = document.getElementById("truckType").value;
+
+  if (!pickup || !drop) {
+    msg.innerText = "❌ Pickup and drop are required";
+    msg.style.color = "red";
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API}/create`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pickup, drop, weight, truckType })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      msg.innerText = `❌ ${data.error || "Booking failed"}`;
+      msg.style.color = "red";
+      return;
+    }
+
+    msg.innerHTML = `✅ Booking created. Tracking ID: <b>${data.trackingId}</b>`;
+    msg.style.color = "lime";
+  } catch (err) {
+    msg.innerText = `❌ ${err.message}`;
+    msg.style.color = "red";
+  }
+});
+</script>
+
 
 </body>
 </html>

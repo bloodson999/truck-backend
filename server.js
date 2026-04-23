@@ -1,5 +1,9 @@
+require("dotenv").config(); 
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
+const geocode = require("./utils/geocode");
+const getRoute = require("./utils/routeEngine");
 
 const app = express();
 app.use(cors());
@@ -14,39 +18,111 @@ app.use(express.static("public"));
 let shipments = {};
 let locations = {};
 let intervals = {};
+let routes = {};
+let routeIndex = {};
+
+/* -------------------------------
+   SIMPLE ADMIN AUTH
+--------------------------------*/
+const ADMIN_USER = process.env.ADMIN_USER || "admin";
+const ADMIN_PASS = process.env.ADMIN_PASS || "admin123";
+const adminTokens = new Set();
+
+function auth(req, res, next) {
+  const h = req.headers.authorization || "";
+  const token = h.startsWith("Bearer ") ? h.slice(7) : "";
+  if (!token || !adminTokens.has(token)) {
+    return res.status(401).json({ success: false, error: "Unauthorized" });
+  }
+  next();
+}
+
+/* -------------------------------
+   PAGE ALIASES
+--------------------------------*/
+app.get("/", (_req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
+app.get("/admin", (_req, res) => res.sendFile(path.join(__dirname, "public", "admin.html")));
+app.get("/tracking", (_req, res) => res.sendFile(path.join(__dirname, "public", "tracking.html")));
+app.get("/booking", (_req, res) => res.sendFile(path.join(__dirname, "public", "booking.html")));
+
+/* -------------------------------
+   ADMIN ROUTES
+--------------------------------*/
+app.post("/admin/login", (req, res) => {
+  const username = String(req.body?.username || "").trim();
+  const password = String(req.body?.password || "").trim();
+
+  if (username !== ADMIN_USER || password !== ADMIN_PASS) {
+    return res.status(401).json({ success: false, error: "Invalid credentials" });
+  }
+
+  const token = `tok_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  adminTokens.add(token);
+  res.json({ success: true, token });
+});
+
+app.get("/admin/me", auth, (_req, res) => {
+  res.json({ success: true });
+});
+
+app.post("/admin/logout", auth, (req, res) => {
+  const h = req.headers.authorization || "";
+  const token = h.startsWith("Bearer ") ? h.slice(7) : "";
+  if (token) adminTokens.delete(token);
+  res.json({ success: true });
+});
 
 /* -------------------------------
    CREATE SHIPMENT
 --------------------------------*/
-app.post("/create", (req, res) => {
-  const id = "TRK" + Date.now();
+app.post("/create", async (req, res) => {
+  try {
+    const id = "TRK" + Date.now();
+    const pickup = String(req.body.pickup || "").trim();
+    const drop = String(req.body.drop || "").trim();
 
-  shipments[id] = {
-    id,
-    pickup: req.body.pickup || "Unknown",
-    drop: req.body.drop || "Unknown",
-    status: "Created"
-  };
+    if (!pickup || !drop) {
+      return res.status(400).json({ success: false, error: "Pickup and drop are required" });
+    }
 
-  locations[id] = { lat: 31.0, lng: -99.0 };
+    const pickupPoint = await geocode(pickup);
+    const dropPoint = await geocode(drop);
 
-  console.log(`📦 Created shipment ${id}`);
+    // safety check
+    if (!pickupPoint || typeof pickupPoint.lat !== "number") {
+      return res.status(400).json({ success: false, error: `Could not find location: ${pickup}` });
+    }
+    if (!dropPoint || typeof dropPoint.lat !== "number") {
+      return res.status(400).json({ success: false, error: `Could not find location: ${drop}` });
+    }
 
-  res.json({ success: true, trackingId: id });
+    const route = await getRoute(pickupPoint, dropPoint);
+
+    shipments[id] = { id, pickup, drop, status: "Created", history: [pickupPoint] };
+    locations[id] = pickupPoint;
+    routes[id] = route;
+    routeIndex[id] = 0;
+
+    console.log(`📦 Created shipment ${id} from ${pickup} to ${drop}`);
+    res.json({ success: true, trackingId: id });
+  } catch (err) {
+    console.error("Create error:", err.message);
+    res.status(400).json({ success: false, error: err.message });
+  }
 });
-
 /* -------------------------------
    GET SHIPMENT + LOCATION
 --------------------------------*/
 app.get("/shipment/:id", (req, res) => {
-  const id = req.params.id;
+  const id = String(req.params.id || "").trim();
 
   if (!shipments[id]) {
-    return res.status(404).json({ error: "Not found" });
+    return res.status(404).json({ success: false, error: "Not found" });
   }
 
   res.json({
-    shipment: shipments[id],
+    success: true,
+    shipment: { ...shipments[id], location: locations[id] },
     location: locations[id]
   });
 });
@@ -54,61 +130,89 @@ app.get("/shipment/:id", (req, res) => {
 /* -------------------------------
    START AUTO MOVEMENT
 --------------------------------*/
-app.post("/start/:id", (req, res) => {
-  const id = req.params.id;
 
-  if (!locations[id]) {
-    return res.status(404).json({ error: "Invalid ID" });
+app.post("/start/:id", auth, (req, res) => {
+  const id = String(req.params.id || "").trim();
+
+  if (!shipments[id] || !routes[id] || routes[id].length === 0) {
+    return res.status(404).json({ success: false, error: "Invalid ID" });
   }
 
-  const target = { lat: 34.0, lng: -118.2 };
+  // configurable speed
+  const TICK_MS = Math.max(1000, Number(process.env.MOVE_TICK_MS || 5000)); // slower: 5s
+  const POINT_STEP = Math.max(1, Number(process.env.MOVE_POINT_STEP || 1)); // points per tick
 
   clearInterval(intervals[id]);
+  shipments[id].status = "In Transit";
 
   intervals[id] = setInterval(() => {
-    let current = locations[id];
+    const path = routes[id];
+    let idx = routeIndex[id] ?? 0;
 
-    if (
-      Math.abs(current.lat - target.lat) < 0.1 &&
-      Math.abs(current.lng - target.lng) < 0.1
-    ) {
+    if (idx >= path.length - 1) {
       clearInterval(intervals[id]);
       shipments[id].status = "Delivered";
       console.log(`📦 ${id} DELIVERED`);
       return;
     }
 
-    current.lat += (target.lat - current.lat) * 0.02;
-    current.lng += (target.lng - current.lng) * 0.02;
+    idx = Math.min(idx + POINT_STEP, path.length - 1);
+    routeIndex[id] = idx;
+    locations[id] = path[idx];
+    shipments[id].history.push(path[idx]);
 
-    locations[id] = current;
+    console.log(`🚛 ${id} → ${locations[id].lat.toFixed(4)}, ${locations[id].lng.toFixed(4)}`);
 
-    console.log(`🚛 ${id} → ${current.lat.toFixed(3)}, ${current.lng.toFixed(3)}`);
-  }, 1000);
-
-  shipments[id].status = "In Transit";
+    if (idx >= path.length - 1) {
+      clearInterval(intervals[id]);
+      shipments[id].status = "Delivered";
+      console.log(`📦 ${id} DELIVERED`);
+    }
+  }, TICK_MS);
 
   res.json({ success: true, message: "Truck Started" });
 });
 
+
 /* -------------------------------
    STOP MOVEMENT
 --------------------------------*/
-app.post("/stop/:id", (req, res) => {
-  const id = req.params.id;
+app.post("/stop/:id", auth, (req, res) => {
+  const id = String(req.params.id || "").trim();
 
   clearInterval(intervals[id]);
-  shipments[id].status = "Paused";
+  if (shipments[id]) shipments[id].status = "Paused";
 
   console.log(`⛔ STOP ${id}`);
-
   res.json({ success: true, message: "Truck Stopped" });
+});
+
+/* -------------------------------
+   MANUAL LOCATION UPDATE
+--------------------------------*/
+app.post("/update-location/:id", auth, (req, res) => {
+  const id = String(req.params.id || "").trim();
+  const lat = Number(req.body?.lat);
+  const lng = Number(req.body?.lng);
+
+  if (!shipments[id]) {
+    return res.status(404).json({ success: false, error: "Invalid ID" });
+  }
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    return res.status(400).json({ success: false, error: "Invalid latitude/longitude" });
+  }
+
+  locations[id] = { lat, lng };
+  shipments[id].history.push({ lat, lng });
+
+  res.json({ success: true, message: "Location Updated" });
 });
 
 /* -------------------------------
    TEST ROUTE
 --------------------------------*/
-app.get("/test", (req, res) => {
+app.get("/test", (_req, res) => {
   res.send("Server is working");
 });
 
