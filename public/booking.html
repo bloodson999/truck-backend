@@ -165,7 +165,6 @@
 <script src="js/navbar.js"></script>
 
 <script>
-const API = window.location.origin; // was "http://localhost:3000"
 document.getElementById("bookingForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -183,7 +182,7 @@ document.getElementById("bookingForm").addEventListener("submit", async (e) => {
   }
 
   try {
-    const res = await fetch(`${API}/create`, {
+    const res = await fetch("/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pickup, drop, weight, truckType })
@@ -205,7 +204,6 @@ document.getElementById("bookingForm").addEventListener("submit", async (e) => {
   }
 });
 </script>
-
 
 </body>
 </html>
