@@ -26,6 +26,7 @@ const shipmentSchema = new mongoose.Schema(
       enum: ["Created", "In Transit", "Paused", "Delivered"],
       default: "Created"
     },
+    pauseReason: { type: String, default: "" },
 
     location: { type: pointSchema, required: true },
     history: { type: [pointSchema], default: [] },

@@ -148,7 +148,7 @@
 
       document.getElementById("map").style.display = "block";
       updateMap(loc);
-      msg.innerText = `ℹ️ Status: ${ship.status || "Created"}`;
+      msg.innerText = `ℹ️ Status: ${ship.status || "Created"}${ship.pauseReason ? ` (${ship.pauseReason})` : ""}`;
 
       pollTimer = setInterval(async () => {
         try {
@@ -165,12 +165,12 @@
           if (s.status === "In Transit") {
             msg.innerText = `🚛 Moving: ${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}`;
           } else if (s.status === "Paused") {
-            msg.innerText = "⛔ Stopped";
+            msg.innerText = `⛔ Stopped${s.pauseReason ? ` (${s.pauseReason})` : ""}`;
           } else if (s.status === "Delivered") {
             msg.innerText = "✅ Delivered";
             clearInterval(pollTimer);
           } else {
-            msg.innerText = `ℹ️ Status: ${s.status || "Created"}`;
+            msg.innerText = `ℹ️ Status: ${s.status || "Created"}${s.pauseReason ? ` (${s.pauseReason})` : ""}`;
           }
         } catch {
           msg.innerText = "⚠️ Network error";

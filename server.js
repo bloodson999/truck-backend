@@ -42,6 +42,7 @@ function formatShipment(shipment) {
     weight: shipment.weight,
     truckType: shipment.truckType,
     status: shipment.status,
+    pauseReason: shipment.pauseReason || "",
     history: shipment.history,
     location: shipment.location,
     routeIndex: shipment.routeIndex
@@ -214,16 +215,18 @@ app.post("/start/:id", auth, async (req, res) => {
 app.post("/stop/:id", auth, async (req, res) => {
   try {
     const id = String(req.params.id || "").trim();
+    const reason = String(req.body?.reason || req.query?.reason || "Manual").trim();
     clearShipmentInterval(id);
 
     const shipment = await Shipment.findOne({ trackingId: id });
     if (shipment) {
       shipment.status = "Paused";
+      shipment.pauseReason = reason;
       await shipment.save();
     }
 
-    console.log(`⛔ STOP ${id}`);
-    res.json({ success: true, message: "Truck Stopped" });
+    console.log(`⛔ STOP ${id} reason=${reason}`);
+    res.json({ success: true, message: "Truck Stopped", reason });
   } catch (err) {
     res.status(500).json({ success: false, error: "Server error" });
   }
